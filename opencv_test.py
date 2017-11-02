@@ -10,21 +10,24 @@ import matplotlib.pyplot as plt
 # Global variables
 # ==================================================
 cascPath = 'haarcascade_frontalface_default.xml'
+orig_images_folder = 'orig_images'
+face_images_folder = 'face_images'
 # ==================================================
 
 # Functions
 # ==================================================
 def test1():
 	# Get user supplied values
-	imagePath = sys.argv[1]
+	imageFile = sys.argv[1]
+	imagePath = orig_images_folder + '/' + imageFile
 	# Create the haar cascade
 	faceCascade = cv2.CascadeClassifier(cascPath)
 	# Read the image
 	image = cv2.imread(imagePath, 0)
-	gray = image #cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+	#gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 	# Detect faces in the image
 	faces = faceCascade.detectMultiScale(
-	    gray,
+	    image, #gray,
 	    scaleFactor=1.1,
 	    minNeighbors=5,
 	    minSize=(30, 30),
@@ -34,23 +37,41 @@ def test1():
 
 	# Draw a rectangle around the faces
 	crop_faces = []
+	i = 0
 	for (x, y, w, h) in faces:
-	    #cv2.rectangle(image, (int(x-0.2*w), int(y-0.5*h)), (int(x+1.2*w), int(y+1.5*h)), (0, 255, 0), 2)
-		crop_img = image[int(y-0.5*h):int(y+1.5*h), int(x-0.2*w):int(x+1.2*w)] # Crop from x, y, w, h -> 100, 200, 300, 400
+	    #cv2.rectangle(image, x, y, w, h, (0, 255, 0), 2)
+		imgW, imgH = image.shape
+		x0 = int(x-0.2*w) if int(x-0.2*w) > 0 else 0
+		y0 = int(y-0.5*h) if int(y-0.5*h) > 0 else 0
+		x1 = min([imgH-1,int(x+1.2*w)])
+		y1 = min([imgW-1,int(y+1.5*h)])
+		crop_img = image[y0:y1, x0:x1]
+		#crop_img = image[int(y-0.5*h):int(y+1.5*h), int(x-0.2*w):int(x+1.2*w)] # Crop from x, y, w, h -> 100, 200, 300, 400
+		#print ((x, y, w, h))
+		#print (image.shape)
+		#print (crop_img.shape)
 		# NOTE: its img[y: y + h, x: x + w] and *not* img[x: x + w, y: y + h]
 		crop_faces.append(crop_img)
+		i = i + 1
+		face_image_path = face_images_folder + '/face_' + str(i) + '_' + imageFile
+		cv2.imwrite(face_image_path, crop_img)
+	
+	for (x, y, w, h) in faces:
+		cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
 		#plt.imshow(crop_img, cmap = 'gray', interpolation = 'bicubic')
 		#plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
 		#plt.show()
-
-
+	
+	orig_image_path = face_images_folder + '/' + imageFile
+	cv2.imwrite(orig_image_path, image)
+		
 	#cv2.imshow("Faces found" ,image)
 	#k = cv2.waitKey(0)
 	#if k == 27:
 	#	cv2.destroyAllWindows()
 	
-	if len(crop_faces) > 0:
-		cv2.imwrite('crop_'+imagePath, crop_faces[0])
+	#if len(crop_faces) > 0:
+		#cv2.imwrite('crop_'+imagePath, crop_faces[0])
 		#plt.imshow(crop_faces[0], cmap = 'gray', interpolation = 'bicubic')
 		#plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
 		#plt.show()
@@ -121,5 +142,5 @@ def test3():
 # Main
 # ==================================================
 if __name__ == '__main__':
-	test3()
+	test1()
 # ==================================================
